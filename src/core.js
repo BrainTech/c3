@@ -433,7 +433,7 @@ c3_chart_internal_fn.redraw = function (options, transitions) {
     var areaIndices = $$.getShapeIndices($$.isAreaType), barIndices = $$.getShapeIndices($$.isBarType), lineIndices = $$.getShapeIndices($$.isLineType);
     var withY, withSubchart, withTransition, withTransitionForExit, withTransitionForAxis,
         withTransform, withUpdateXDomain, withUpdateOrgXDomain, withTrimXDomain, withLegend,
-        withEventRect, withDimension, withUpdateXAxis;
+        withEventRect, withDimension, withUpdateXAxis, withUpdateAxis;
     var hideAxis = $$.hasArcType();
     var drawArea, drawBar, drawLine, xForText, yForText;
     var duration, durationForExit, durationForAxis;
@@ -455,6 +455,7 @@ c3_chart_internal_fn.redraw = function (options, transitions) {
     withDimension = getOption(options, "withDimension", true);
     withTransitionForExit = getOption(options, "withTransitionForExit", withTransition);
     withTransitionForAxis = getOption(options, "withTransitionForAxis", withTransition);
+    withUpdateAxis = getOption(options, "withUpdateAxis",true);
 
     duration = withTransition ? config.transition_duration : 0;
     durationForExit = withTransitionForExit ? duration : 0;
@@ -492,19 +493,20 @@ c3_chart_internal_fn.redraw = function (options, transitions) {
 
     $$.y.domain($$.getYDomain(targetsToShow, 'y', xDomainForZoom));
     $$.y2.domain($$.getYDomain(targetsToShow, 'y2', xDomainForZoom));
-
-    if (!config.axis_y_tick_values && config.axis_y_tick_count) {
+    if (withUpdateAxis) {
+      if (!config.axis_y_tick_values && config.axis_y_tick_count) {
         $$.yAxis.tickValues($$.axis.generateTickValues($$.y.domain(), config.axis_y_tick_count));
-    }
-    if (!config.axis_y2_tick_values && config.axis_y2_tick_count) {
+      }
+      if (!config.axis_y2_tick_values && config.axis_y2_tick_count) {
         $$.y2Axis.tickValues($$.axis.generateTickValues($$.y2.domain(), config.axis_y2_tick_count));
+      }
+
+      // axes
+      $$.axis.redraw(durationForAxis, hideAxis);
+
+      // Update axis label
+      $$.axis.updateLabels(withTransition);
     }
-
-    // axes
-    $$.axis.redraw(durationForAxis, hideAxis);
-
-    // Update axis label
-    $$.axis.updateLabels(withTransition);
 
     // show/hide if manual culling needed
     if ((withUpdateXDomain || withUpdateXAxis) && targetsToShow.length) {

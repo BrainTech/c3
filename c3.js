@@ -1503,7 +1503,7 @@
         var areaIndices = $$.getShapeIndices($$.isAreaType),
             barIndices = $$.getShapeIndices($$.isBarType),
             lineIndices = $$.getShapeIndices($$.isLineType);
-        var withY, withSubchart, withTransition, withTransitionForExit, withTransitionForAxis, withTransform, withUpdateXDomain, withUpdateOrgXDomain, withTrimXDomain, withLegend, withEventRect, withDimension, withUpdateXAxis;
+        var withY, withSubchart, withTransition, withTransitionForExit, withTransitionForAxis, withTransform, withUpdateXDomain, withUpdateOrgXDomain, withTrimXDomain, withLegend, withEventRect, withDimension, withUpdateXAxis, withUpdateAxis;
         var hideAxis = $$.hasArcType();
         var drawArea, drawBar, drawLine, xForText, yForText;
         var duration, durationForExit, durationForAxis;
@@ -1531,6 +1531,7 @@
         withDimension = getOption(options, "withDimension", true);
         withTransitionForExit = getOption(options, "withTransitionForExit", withTransition);
         withTransitionForAxis = getOption(options, "withTransitionForAxis", withTransition);
+        withUpdateAxis = getOption(options, "withUpdateAxis", true);
 
         duration = withTransition ? config.transition_duration : 0;
         durationForExit = withTransitionForExit ? duration : 0;
@@ -1568,19 +1569,20 @@
 
         $$.y.domain($$.getYDomain(targetsToShow, 'y', xDomainForZoom));
         $$.y2.domain($$.getYDomain(targetsToShow, 'y2', xDomainForZoom));
+        if (withUpdateAxis) {
+            if (!config.axis_y_tick_values && config.axis_y_tick_count) {
+                $$.yAxis.tickValues($$.axis.generateTickValues($$.y.domain(), config.axis_y_tick_count));
+            }
+            if (!config.axis_y2_tick_values && config.axis_y2_tick_count) {
+                $$.y2Axis.tickValues($$.axis.generateTickValues($$.y2.domain(), config.axis_y2_tick_count));
+            }
 
-        if (!config.axis_y_tick_values && config.axis_y_tick_count) {
-            $$.yAxis.tickValues($$.axis.generateTickValues($$.y.domain(), config.axis_y_tick_count));
+            // axes
+            $$.axis.redraw(durationForAxis, hideAxis);
+
+            // Update axis label
+            $$.axis.updateLabels(withTransition);
         }
-        if (!config.axis_y2_tick_values && config.axis_y2_tick_count) {
-            $$.y2Axis.tickValues($$.axis.generateTickValues($$.y2.domain(), config.axis_y2_tick_count));
-        }
-
-        // axes
-        $$.axis.redraw(durationForAxis, hideAxis);
-
-        // Update axis label
-        $$.axis.updateLabels(withTransition);
 
         // show/hide if manual culling needed
         if ((withUpdateXDomain || withUpdateXAxis) && targetsToShow.length) {
@@ -4603,9 +4605,7 @@
                 return;
             }
             $$.d3.select(this).selectAll('path').transition().duration($$.expandDuration(d.data.id)).attr("d", $$.svgArcExpanded).transition().duration($$.expandDuration(d.data.id) * 2).attr("d", $$.svgArcExpandedSub).each(function (d) {
-                if ($$.isDonutType(d.data)) {
-                    // callback here
-                }
+                if ($$.isDonutType(d.data)) ;
             });
         });
     };
@@ -6114,7 +6114,8 @@
         $$.updateTargets($$.data.targets);
 
         // Redraw with new targets
-        $$.redraw({ withUpdateOrgXDomain: true, withUpdateXDomain: true, withLegend: true });
+        var redrawOptions = args.redraw ? args.redraw : { withUpdateOrgXDomain: true, withUpdateXDomain: true, withLegend: true };
+        $$.redraw(redrawOptions);
 
         if (args.done) {
             args.done();
@@ -8209,7 +8210,7 @@
 
     c3_chart_internal_fn.updateCircle = function (cx, cy) {
         var $$ = this;
-        var mainCircle = $$.main.selectAll('.' + CLASS.circles).selectAll('.' + CLASS.circle).data($$.lineOrScatterData.bind($$));
+        var mainCircle = $$.main.selectAll('.' + CLASS.circles).selectAll('.' + CLASS.circle).data($$.config.point_show ? $$.lineOrScatterData.bind($$) : []);
         var mainCircleEnter = mainCircle.enter().append("circle").attr("class", $$.classCircle.bind($$)).attr("cx", cx).attr("cy", cy).attr("r", $$.pointR.bind($$)).style("fill", $$.color);
         $$.mainCircle = mainCircleEnter.merge(mainCircle).style("opacity", $$.initialOpacityForCircle.bind($$));
         mainCircle.exit().style("opacity", 0);
