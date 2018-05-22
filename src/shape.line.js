@@ -302,10 +302,10 @@ c3_chart_internal_fn.generateGetAreaPoints = function (areaIndices, isSub) { // 
 };
 
 
-c3_chart_internal_fn.updateCircle = function (cx, cy) {
+c3_chart_internal_fn.updateCircle = function (cx, cy) {    
     var $$ = this;
     var mainCircle = $$.main.selectAll('.' + CLASS.circles).selectAll('.' + CLASS.circle)
-        .data($$.lineOrScatterData.bind($$));
+        .data($$.config.point_show ? $$.lineOrScatterData.bind($$) : []);
     var mainCircleEnter = mainCircle.enter().append("circle")
         .attr("class", $$.classCircle.bind($$))
         .attr("cx", cx)
@@ -317,7 +317,7 @@ c3_chart_internal_fn.updateCircle = function (cx, cy) {
     mainCircle.exit()
         .style("opacity", 0);
 };
-c3_chart_internal_fn.redrawCircle = function (cx, cy, withTransition, transition) {
+c3_chart_internal_fn.redrawCircle = function (cx, cy, withTransition, transition) {    
     var $$ = this,
         selectedCircles = $$.main.selectAll('.' + CLASS.selectedCircle);
     return [
